@@ -10,9 +10,10 @@ header{
   .logo {
     font-size: 2.2rem;
     font-weight: 900;
-    letter-spacing: 0.15em;
+    letter-spacing: 0.20em;
     color: var(--gold);
     text-shadow: 0 0 20px rgba(255,215,0,0.4);
+    margin-left: 30px;
   }
 
   .logo span { color: var(--white); }
