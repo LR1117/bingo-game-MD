@@ -439,10 +439,26 @@ header{
   .pc-cell:hover { background: #243F9A; }
 
   .pc-cell.daubed {
-    background: var(--gold);
-    color: var(--navy);
-    border-color: var(--gold);
+    background: var()
+
   }
+:root {
+    --navy: #0B1F4A;
+    --gold: #FFD700;
+    --gold-dark: #B8960A;
+    --red: #C0392B;
+    --green: #27AE60;
+    --white: #FFFFFF;
+    --off-white: #F0F4FF;
+    --card-bg: #132A6B;
+    --ball-b: #0066CC;
+    --ball-i: #FF6600;
+    --ball-n: #CC0000;
+    --ball-g: #009900;
+    --ball-o: #9900CC;
+    --text-muted: #8BA3D4;
+}
+    
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
 

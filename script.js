@@ -1,138 +1,4 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Bingo Night</title>
-<link rel="stylesheet" href="style.css">
-</head>
-<body>
 
-<header>
-  <div class="logo">BINGO<span> Night</span></div>
-  <div class="header-controls">
-    <button class="btn-mode active" id="btn-caller" onclick="setMode('caller')">🎙 Caller</button>
-    <button class="btn-mode" id="btn-player" onclick="setMode('player')">🃏 Player</button>
-    <div class="mode-badge" id="mode-label">Caller Mode</div>
-  </div>
-</header>
-
-<main>
-
-  <!-- Firebase Setup Panel -->
-  <div class="firebase-setup" id="firebase-setup">
-    <h3>⚡ Connect to Firebase for Real-Time Sync</h3>
-    <p>To sync numbers across devices, you need a free Firebase project. Paste your Firebase Database URL below (looks like <code>https://your-project-default-rtdb.firebaseio.com</code>).</p>
-    <div class="steps">
-      <div class="step"><div class="step-num">1</div><div>Go to <strong>console.firebase.google.com</strong> → Create Project → Add Realtime Database</div></div>
-      <div class="step"><div class="step-num">2</div><div>In Database rules, set both read and write to <code>true</code> (for a private game)</div></div>
-      <div class="step"><div class="step-num">3</div><div>Copy the Database URL from the Realtime Database page and paste below</div></div>
-    </div>
-    <input type="text" id="firebase-url-input" placeholder="https://your-project-default-rtdb.firebaseio.com" />
-    <div style="display:flex;gap:0.5rem;flex-wrap:wrap;">
-      <button class="btn-gold" onclick="connectFirebase()">Connect</button>
-      <button class="btn-outline" onclick="useLocalMode()">Use Local (this device only)</button>
-    </div>
-  </div>
-
-  <!-- Status Bar -->
-  <div class="status-bar" id="status-bar" style="display:none;">
-    <div class="status-dot" id="status-dot"></div>
-    <span class="status-text" id="status-text">Connecting…</span>
-    <span class="status-count" id="balls-count">0 balls called</span>
-    <button class="btn-danger" style="margin-left:auto;font-size:0.8rem;padding:0.35rem 0.8rem;" onclick="confirmReset()">Reset Game</button>
-  </div>
-
-  <!-- Main content (hidden until connected) -->
-  <div id="main-content" style="display:none;">
-
-    <!-- Current Ball Display -->
-    <div class="ball-display">
-      <div class="big-ball empty" id="big-ball">
-        <div class="ball-letter" id="big-letter">?</div>
-        <div class="ball-number" id="big-number">—</div>
-      </div>
-      <div class="ball-info">
-        <h2>Recent Calls</h2>
-        <div class="recent-balls" id="recent-balls">
-          <span style="color:var(--text-muted);font-size:0.85rem;">No numbers called yet</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Caller Panel (only visible in caller mode) -->
-    <div class="caller-panel" id="caller-panel">
-      <h3>🎙 Call a Number</h3>
-      <div class="caller-input-row">
-        <div class="number-input-wrap">
-          <label>Number (1–75)</label>
-          <input type="number" id="call-input" min="1" max="75" placeholder="42" onkeydown="handleCallKey(event)" />
-        </div>
-        <div class="caller-actions">
-          <button class="btn-gold" onclick="callNumber()">Call It!</button>
-          <button class="btn-outline" onclick="undoLast()">↩ Undo</button>
-        </div>
-      </div>
-      <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.75rem;">Enter the number that was drawn and click <strong>Call It!</strong> — it will appear on all players' screens instantly.</p>
-    </div>
-
-    <!-- Pattern + Board Grid -->
-    <div class="grid-2">
-
-      <!-- Left: Pattern -->
-      <div>
-        <div class="pattern-panel">
-          <h3>🎯 Win Condition</h3>
-          <div class="pattern-select-row">
-            <div>
-              <select id="pattern-select" onchange="updatePattern()" style="margin-bottom:0.75rem;width:100%;">
-                <option value="line">Standard Line (any row, col, diagonal)</option>
-                <option value="corners">Four Corners</option>
-                <option value="t-shape">T-Shape</option>
-                <option value="x-shape">X-Shape (both diagonals)</option>
-                <option value="frame">Frame (outer ring)</option>
-                <option value="coverall">Coverall (blackout)</option>
-                <option value="postage">Postage Stamp (top-right 2x2)</option>
-                <option value="l-shape">L-Shape (bottom row + left col)</option>
-              </select>
-              <div class="pattern-preview" id="pattern-preview"></div>
-            </div>
-            <div class="pattern-desc">
-              <h4 id="pattern-name">Standard Line</h4>
-              <p id="pattern-desc-text">Get 5 in a row — horizontally, vertically, or diagonally. The FREE space counts!</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Right: Player Card
-      <div class="player-card-section">
-        <h3>🃏 Your Bingo Card <button class="btn-outline" style="font-size:0.75rem;padding:0.25rem 0.6rem;margin-left:0.5rem;" onclick="generateCard()">New Card</button></h3>
-        <div id="bingo-alert" style="display:none;" class="bingo-alert">🎉 BINGO! 🎉</div>
-        <div class="player-card-grid" id="player-card"></div>
-        <p style="font-size:0.78rem;color:var(--text-muted);margin-top:0.5rem;">Click squares to daub them. Gold = called by caller.</p>
-      </div> -->
-
-    </div>
-
-    <!-- Full Board -->
-    <div class="board-section">
-      <div class="board-header">
-        <h3>📋 All Numbers</h3>
-        <span style="font-size:0.8rem;color:var(--text-muted);">Gold = called</span>
-      </div>
-      <div class="bingo-board" id="bingo-board"></div>
-    </div>
-
-  </div>
-</main>
-
-<div id="toast"></div>
-
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
-
-<script>
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let mode = 'caller';
 let calledNumbers = [];
@@ -272,13 +138,13 @@ function loadCardFromStorage() {
 
 // ─── FIREBASE ────────────────────────────────────────────────────────────────
 function connectFirebase() {
-  const url = document.getElementById('firebase-url-input').value.trim();
+  const url = 'https://bingogamemd-default-rtdb.firebaseio.com/' ;
   if (!url || !url.includes('firebaseio.com')) {
     showToast('Please enter a valid Firebase Realtime Database URL.');
     return;
   }
   localStorage.setItem('bingo_firebase_url', url);
-  initFirebase(url);
+  initFirebase('https://bingogamemd-default-rtdb.firebaseio.com/');
 }
 
 function initFirebase(url) {
@@ -637,6 +503,3 @@ window.addEventListener('DOMContentLoaded', () => {
     initFirebase(savedUrl);
   }
 });
-</script>
-</body>
-</html>
