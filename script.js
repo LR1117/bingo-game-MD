@@ -15,7 +15,7 @@ const ROUND_DATA = [
 // ─── PATTERN DEFINITIONS ─────────────────────────────────────────────────────
 const PATTERNS = {
   'line':     { name: 'Standard Line',       desc: 'Get 5 in a row — horizontally, vertically, or diagonally. The FREE space counts!' },
-  'corners':  { name: 'Four Corners',        desc: 'Mark the four corner squares: B1, B15, O1 and O75.' },
+  'corners':  { name: 'Four Corners',        desc: 'Mark the four corner squares.' },
   't-shape':  { name: 'T-Shape',             desc: 'Fill the entire top row plus the middle column.' },
   'plus':     { name: 'Plus Sign',           desc: 'Fill the entire middle row AND middle column — forms a + shape.' },
   'x-shape':  { name: 'X-Shape',             desc: 'Mark both diagonals — they form an X across the card.' },
