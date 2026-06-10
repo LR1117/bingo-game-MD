@@ -186,7 +186,11 @@ function nextRound() {
   } else {
     currentRoundTitle = `Round ${nextNum}`;
     // keep prize and pattern from previous round
+    
   }
+
+
+  
 
   calledNumbers = [];
   syncCallerInputs();
@@ -267,8 +271,11 @@ function updateRoundPrizeDisplay() {
     if (isBonusRound) {
       prizeEl.textContent = 'Bonus Round - Prize TBD';
     } else {
-  
-      prizeEl.textContent = (currentPrize &&roundEl<=10) ? ` ${currentPrize}` : 'Prize TBD';
+      if (currentRound<=10){
+        prizeEl.textContent = currentPrize ? ` ${currentPrize}` : 'Prize TBD';
+      }else{
+        prizeEl.textContent = 'Prize TBD'
+      }
     }
   }
 
@@ -473,7 +480,11 @@ function reset(){
   } else {
     currentRoundTitle = `Round ${nextNum}`;
     // keep prize and pattern from previous round
+   
   }
+  
+  
+
 
   calledNumbers = [];
   syncCallerInputs();
@@ -491,7 +502,7 @@ function backOneRound(){
   isBonusRound = false;
   currentRound = nextNum;
 
-  // Auto-fill from hard-coded data if available
+  //Auto-fill from hard-coded data if available
   const data = ROUND_DATA.find(r => r.round === nextNum);
   if (data) {
     currentPrize      = data.prize;
@@ -500,7 +511,10 @@ function backOneRound(){
   } else {
     currentRoundTitle = `Round ${nextNum}`;
     // keep prize and pattern from previous round
+  
   }
+ 
+
 
   calledNumbers = [];
   syncCallerInputs();
