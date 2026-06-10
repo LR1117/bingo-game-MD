@@ -456,6 +456,59 @@ function showToast(msg) {
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
 }
 
+function reset(){
+  const nextNum = 1;
+  const label = nextNum > ROUND_DATA.length ? `Round ${nextNum}` : `Round ${nextNum}`;
+  if (!confirm(`Start Round ${nextNum}? This will clear all called numbers.`)) return;
+
+  isBonusRound = false;
+  currentRound = nextNum;
+
+  // Auto-fill from hard-coded data if available
+  const data = ROUND_DATA.find(r => r.round === nextNum);
+  if (data) {
+    currentPrize      = data.prize;
+    currentPattern    = data.pattern;
+    currentRoundTitle = data.title;
+  } else {
+    currentRoundTitle = `Round ${nextNum}`;
+    // keep prize and pattern from previous round
+  }
+
+  calledNumbers = [];
+  syncCallerInputs();
+  pushState();
+  showToast(`Round ${currentRound} started!`);
+
+}
+
+
+function backOneRound(){
+  const nextNum = currentRound -1;
+  const label = nextNum > ROUND_DATA.length ? `Round ${nextNum}` : `Round ${nextNum}`;
+  if (!confirm(`Go back to round ${nextNum}? This will clear all called numbers.`)) return;
+
+  isBonusRound = false;
+  currentRound = nextNum;
+
+  // Auto-fill from hard-coded data if available
+  const data = ROUND_DATA.find(r => r.round === nextNum);
+  if (data) {
+    currentPrize      = data.prize;
+    currentPattern    = data.pattern;
+    currentRoundTitle = data.title;
+  } else {
+    currentRoundTitle = `Round ${nextNum}`;
+    // keep prize and pattern from previous round
+  }
+
+  calledNumbers = [];
+  syncCallerInputs();
+  pushState();
+  showToast(`Back to round ${currentRound} !`);
+}
+
+
 // ─── BOOT ────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
   connectFirebase();

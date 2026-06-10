@@ -59,6 +59,8 @@
           <div class="caller-actions">
             <button class="btn-call" onclick="callNumber()">Call It!</button>
             <button class="btn-undo" onclick="undoLast()">↩ Undo</button>
+            <button class="btn-reset" onclick="reset()">Reset to round 1</button>
+            <button class="btn-backone" onclick="backOneRound()">Go back one Round</button>
           </div>
         </div>
 
@@ -69,7 +71,7 @@
             <input type="text" id="round-title-input" placeholder="Round 1" oninput="updateRoundTitle()" />
           </div>
           <div class="round-field">
-            <label>🏆 Prize</label>
+            <label> Prize</label>
             <input type="text" id="prize-input" placeholder="e.g. $100 Amazon Gift Card" oninput="updatePrize()" />
           </div>
         </div>
@@ -85,6 +87,8 @@
           <strong>Bonus Round</strong> keeps the current win condition but shows no prize.
         </p>
       </div>
+      
+      
 
       <!-- Win condition -->
       <div class="pattern-panel">

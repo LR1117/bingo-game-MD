@@ -119,6 +119,19 @@ button {
   border-color: var(--primary);
 }
 
+.btn-reset{
+  background: var(--primary);
+  color: #fff;
+}
+
+.btn-reset:hover { background: var(--primary-lt); transform: translateY(-1px); }
+
+.btn-backone{
+  background: var(--primary);
+  color: #fff;
+}
+.btn-backone:hover { background: var(--primary-lt); transform: translateY(-1px); }
+
 /* ── FORM CONTROLS ────────────────────────────────────────────────────────── */
 select, input[type="number"], input[type="text"] {
   background: var(--bg-white);
