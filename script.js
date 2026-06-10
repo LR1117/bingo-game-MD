@@ -265,9 +265,10 @@ function updateRoundPrizeDisplay() {
   if (roundEl) roundEl.textContent = currentRoundTitle || `Round ${currentRound}`;
   if (prizeEl) {
     if (isBonusRound) {
-      prizeEl.textContent = 'Bonus Round — No Prize';
+      prizeEl.textContent = 'Bonus Round - Prize TBD';
     } else {
-      prizeEl.textContent = currentPrize ? `🏆 ${currentPrize}` : 'Prize TBD';
+  
+      prizeEl.textContent = (currentPrize &&round<=10) ? ` ${currentPrize}` : 'Prize TBD';
     }
   }
 
