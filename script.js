@@ -25,7 +25,7 @@ const PATTERNS = {
   'l-shape':  { name: 'L-Shape',             desc: 'Fill the entire bottom row and entire left column.' },
   'block6':   { name: 'Block of 6',          desc: 'Any 6 squares that form a solid 3×2 or 2×3 block anywhere on the card.' },
   'standing': { name: 'Standing Up Bingo',   desc: 'Everyone stands at the start. When a number on YOUR card is called, you SIT DOWN and are OUT. Last person(s) standing win!' },
-  'standing2':{ name: 'Standing Up Bingo v2',desc: 'Everyone stands. You STAY STANDING if you have the called number. You SIT if you do NOT have it. Stay standing as long as your numbers keep getting called.' },
+  'standing2':{ name: 'Standing Up Bingo (Stay Standing)',desc: 'Everyone stands. You STAY STANDING if you have the called number. You SIT if you do NOT have it. Stay standing as long as your numbers keep getting called.' },
 };
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
@@ -268,7 +268,7 @@ function updateRoundPrizeDisplay() {
       prizeEl.textContent = 'Bonus Round - Prize TBD';
     } else {
   
-      prizeEl.textContent = (currentPrize &&round<=10) ? ` ${currentPrize}` : 'Prize TBD';
+      prizeEl.textContent = (currentPrize &&roundEl<=10) ? ` ${currentPrize}` : 'Prize TBD';
     }
   }
 
@@ -366,28 +366,58 @@ function updateBallCount() {
 
 // ─── PATTERN PREVIEW ─────────────────────────────────────────────────────────
 function renderPatternPreview(containerId, pattern) {
-  const container = document.getElementById(containerId);
-  if (!container) return;
-  container.innerHTML = '';
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      const cell = document.createElement('div');
-      const isCenter = r === 2 && c === 2;
-      let on = false;
-      if      (pattern === 'line')      on = r === 2 || c === 2 || r === c || r === 4-c;
-      else if (pattern === 'corners')   on = (r === 0 || r === 4) && (c === 0 || c === 4);
-      else if (pattern === 't-shape')   on = r === 0 || c === 2;
-      else if (pattern === 'plus')      on = r === 2 || c === 2;
-      else if (pattern === 'x-shape')   on = r === c || r === 4-c;
-      else if (pattern === 'frame')     on = r === 0 || r === 4 || c === 0 || c === 4;
-      else if (pattern === 'coverall')  on = true;
-      else if (pattern === 'postage')   on = r <= 1 && c >= 3;
-      else if (pattern === 'l-shape')   on = r === 4 || c === 0;
-      else if (pattern === 'block6')    on = r >= 1 && r <= 2 && c >= 1 && c <= 3;
-      else if (pattern === 'standing')  on = (r + c) % 2 === 0;  // checkerboard hint
-      else if (pattern === 'standing2') on = r % 2 === 0;
-      cell.className = `pp-cell${isCenter ? ' free' : (on ? ' on' : '')}`;
-      container.appendChild(cell);
+  if (pattern != 'line' && pattern != 'standing' && pattern != 'standing2'){
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        const cell = document.createElement('div');
+        const isCenter = r === 2 && c === 2;
+        let on = false;
+        //line:on = r === 2 || c === 2 || r === c || r === 4-c
+        //staanding one:on = (r + c) % 2 === 0
+        //standing two: on = r % 2 === 0
+        if      (pattern === 'line')      ;
+        else if (pattern === 'corners')   on = (r === 0 || r === 4) && (c === 0 || c === 4);
+        else if (pattern === 't-shape')   on = r === 0 || c === 2;
+        else if (pattern === 'plus')      on = r === 2 || c === 2;
+        else if (pattern === 'x-shape')   on = r === c || r === 4-c;
+        else if (pattern === 'frame')     on = r === 0 || r === 4 || c === 0 || c === 4;
+        else if (pattern === 'coverall')  on = true;
+        else if (pattern === 'postage')   on = r <= 1 && c >= 3;
+        else if (pattern === 'l-shape')   on = r === 4 || c === 0;
+        else if (pattern === 'block6')    on = r >= 1 && r <= 2 && c >= 1 && c <= 3;
+        else if (pattern === 'standing')  ;  // checkerboard hint
+        else if (pattern === 'standing2') ;
+        cell.className = `pp-cell${isCenter ? ' free' : (on ? ' on' : '')}`;
+        container.appendChild(cell);
+      }
+    }
+  }else{
+    const container = document.getElementById(containerId);
+    if (!container) return;
+    container.innerHTML = '';
+    for (let r = 0; r < 5; r++) {
+      for (let c = 0; c < 5; c++) {
+        
+        //line:on = r === 2 || c === 2 || r === c || r === 4-c
+        //staanding one:on = (r + c) % 2 === 0
+        //standing two: on = r % 2 === 0
+        if      (pattern === 'line')      ;
+        else if (pattern === 'corners')  ;
+        else if (pattern === 't-shape')   ;
+        else if (pattern === 'plus')      ;
+        else if (pattern === 'x-shape')   ;
+        else if (pattern === 'frame')     ;
+        else if (pattern === 'coverall')  ;
+        else if (pattern === 'postage')   ;
+        else if (pattern === 'l-shape')   ;
+        else if (pattern === 'block6')    ;
+        else if (pattern === 'standing')  ;  // checkerboard hint
+        else if (pattern === 'standing2') ;
+        
+      }
     }
   }
 }
