@@ -74,11 +74,19 @@ button {
   transition: all 0.15s;
 }
 
-.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold { 
+  background: var(--gold); 
+  color: var(--navy); 
+  margin-top:20px;
+}
 .btn-gold:hover { background: #FFE234; transform: translateY(-1px); }
 .btn-gold:active { transform: translateY(0); }
 
-.btn-outline { background: transparent; color: var(--gold); border: 1.5px solid var(--gold); }
+.btn-outline { 
+  background: transparent; 
+  color: var(--gold); border: 
+  1.5px solid var(--gold); 
+}
 .btn-outline:hover { background: rgba(255,215,0,0.1); }
 
 .btn-danger { background: var(--red); color: white; }
