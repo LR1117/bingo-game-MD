@@ -3,13 +3,13 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title> Bingo </title>
+<title>Bingo Night</title>
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
 <header>
-  <div class="logo"> BINGO </div>
+  <div class="logo">BINGO</div>
   <div class="header-controls">
     <button class="btn-mode active" id="btn-caller" onclick="setMode('caller')">🎙 Caller</button>
     <button class="btn-mode" id="btn-player" onclick="setMode('presenter')">📺 Presenter</button>
@@ -18,21 +18,22 @@
 </header>
 
 <main>
-  <!-- Status Bar -->
+  <!-- Status bar (caller side) -->
   <div class="status-bar" id="status-bar" style="display:none;">
     <div class="status-dot" id="status-dot"></div>
     <span class="status-text" id="status-text">Connecting…</span>
     <span class="status-count" id="balls-count">0 balls called</span>
+    <span class="round-badge" id="caller-round-display">Round 1</span>
   </div>
 
   <div id="main-content">
 
-    <!-- ═══════════════════════════════════════════════════════════════
+    <!-- ══════════════════════════════════════════════════════
          CALLER VIEW
-    ════════════════════════════════════════════════════════════════ -->
+    ══════════════════════════════════════════════════════ -->
     <div id="caller-view">
 
-      <!-- Current Ball + Recent (smaller, utility row for caller) -->
+      <!-- Compact current ball + recent -->
       <div class="ball-display ball-display--caller">
         <div class="big-ball empty" id="caller-big-ball">
           <div class="ball-letter" id="caller-big-letter">?</div>
@@ -41,60 +42,90 @@
         <div class="ball-info">
           <h2>Recent Calls</h2>
           <div class="recent-balls" id="recent-balls">
-            <span style="color:var(--text-muted);font-size:0.85rem;">No numbers called yet</span>
+            <span class="no-calls-msg">No numbers called yet</span>
           </div>
         </div>
       </div>
 
-      <!-- Caller Panel -->
+      <!-- Caller control panel -->
       <div class="caller-panel">
         <h3>🎙 Call a Number</h3>
+
         <div class="caller-input-row">
           <div class="number-input-wrap">
             <label>Number (1–75)</label>
             <input type="number" id="call-input" min="1" max="75" placeholder="42" onkeydown="handleCallKey(event)" />
           </div>
           <div class="caller-actions">
-            <button class="btn-gold" onclick="callNumber()">Call It!</button>
-            <button class="btn-outline" onclick="undoLast()">↩ Undo</button>
-            <button class="btn-danger" onclick="confirmReset()">🔄 Restart</button>
+            <button class="btn-call" onclick="callNumber()">Call It!</button>
+            <button class="btn-undo" onclick="undoLast()">↩ Undo</button>
           </div>
         </div>
-        <p style="font-size:0.8rem;color:var(--text-muted);margin-top:0.75rem;">
-          Enter the drawn number and click <strong>Call It!</strong> — it syncs instantly to the presenter screen.
-          <strong>Restart</strong> clears all called numbers.
+
+        <!-- Round controls -->
+        <div class="round-controls">
+          <div class="round-field">
+            <label>Round Title</label>
+            <input type="text" id="round-title-input" placeholder="Round 1" oninput="updateRoundTitle()" />
+          </div>
+          <div class="round-field">
+            <label>🏆 Prize</label>
+            <input type="text" id="prize-input" placeholder="e.g. $100 Amazon Gift Card" oninput="updatePrize()" />
+          </div>
+        </div>
+
+        <!-- Round action buttons -->
+        <div class="round-btn-row">
+          <button class="btn-next-round" onclick="nextRound()">▶ Next Round</button>
+          <button class="btn-bonus" onclick="startBonusRound()">⭐ Bonus Round</button>
+        </div>
+
+        <p class="caller-hint">
+          <strong>Next Round</strong> auto-fills the pre-set prize &amp; pattern and clears called numbers.
+          <strong>Bonus Round</strong> keeps the current win condition but shows no prize.
         </p>
       </div>
 
-      <!-- Win Condition — caller can change it -->
+      <!-- Win condition -->
       <div class="pattern-panel">
         <h3>🎯 Win Condition</h3>
         <div class="pattern-select-row">
           <div>
-            <select id="pattern-select" onchange="callerUpdatePattern()" style="margin-bottom:0.75rem;width:100%;">
-              <option value="line">Standard Line (any row, col, diagonal)</option>
-              <option value="corners">Four Corners</option>
-              <option value="t-shape">T-Shape</option>
-              <option value="x-shape">X-Shape (both diagonals)</option>
-              <option value="frame">Frame (outer ring)</option>
-              <option value="coverall">Coverall (blackout)</option>
-              <option value="postage">Postage Stamp (top-right 2x2)</option>
-              <option value="l-shape">L-Shape (bottom row + left col)</option>
-            </select>
+            <select id="pattern-select" onchange="callerUpdatePattern()" style="margin-bottom:0.75rem;width:100%;"></select>
             <div class="pattern-preview" id="caller-pattern-preview"></div>
           </div>
           <div class="pattern-desc">
             <h4 id="caller-pattern-name">Standard Line</h4>
-            <p id="caller-pattern-desc">Get 5 in a row — horizontally, vertically, or diagonally. The FREE space counts!</p>
+            <p id="caller-pattern-desc">Get 5 in a row — horizontally, vertically, or diagonally.</p>
           </div>
         </div>
       </div>
 
-      <!-- Full Numbers Board — caller only -->
+      <!-- Round schedule reference -->
+      <div class="schedule-panel">
+        <h3>📋 Round Schedule</h3>
+        <div class="schedule-grid">
+          <div class="sch-head">Round</div>
+          <div class="sch-head">Prize</div>
+          <div class="sch-head">Pattern</div>
+          <div class="sch-row r1"><span>1</span><span>$100 Amazon Gift Card</span><span>Standard Line</span></div>
+          <div class="sch-row r2"><span>2</span><span>$200 Amazon Gift Card</span><span>Four Corners</span></div>
+          <div class="sch-row r3"><span>3</span><span>$200 Visa Gift Card</span><span>Plus Sign</span></div>
+          <div class="sch-row r4"><span>4</span><span>$300 Visa Gift Card</span><span>Standing Up Bingo</span></div>
+          <div class="sch-row r5"><span>5</span><span>$400 Visa Gift Card</span><span>Standard Line</span></div>
+          <div class="sch-row r6"><span>6</span><span>Mystery Prize</span><span>Standing Up Bingo v2</span></div>
+          <div class="sch-row r7"><span>7</span><span>$500 Visa Gift Card</span><span>Four Corners</span></div>
+          <div class="sch-row r8"><span>8</span><span>Mystery Round</span><span>Block of 6</span></div>
+          <div class="sch-row r9"><span>9</span><span>$1000 Visa Gift Card</span><span>Standing Up Bingo</span></div>
+          <div class="sch-row r10"><span>10</span><span>$1500 Visa Gift Card</span><span>Four Corners</span></div>
+        </div>
+      </div>
+
+      <!-- Full number board -->
       <div class="board-section">
         <div class="board-header">
           <h3>📋 All Numbers</h3>
-          <span style="font-size:0.8rem;color:var(--text-muted);">Gold = called &nbsp;|&nbsp; White = last called</span>
+          <span class="board-legend">Red = called &nbsp;|&nbsp; White = last called</span>
         </div>
         <div class="bingo-board" id="bingo-board"></div>
       </div>
@@ -102,12 +133,25 @@
     </div><!-- /caller-view -->
 
 
-    <!-- ═══════════════════════════════════════════════════════════════
-         PRESENTER VIEW  (projected screen)
-    ════════════════════════════════════════════════════════════════ -->
+    <!-- ══════════════════════════════════════════════════════
+         PRESENTER VIEW
+    ══════════════════════════════════════════════════════ -->
     <div id="presenter-view" style="display:none;">
 
-      <!-- Top row: giant ball + win condition -->
+      <!-- Round + Prize banner -->
+      <div class="presenter-banner">
+        <div class="presenter-banner-item">
+          <span class="presenter-banner-label">Round</span>
+          <span class="presenter-banner-value" id="presenter-round">Round 1</span>
+        </div>
+        <div class="presenter-banner-divider"></div>
+        <div class="presenter-banner-item presenter-banner-prize">
+          <span class="presenter-banner-label">Prize</span>
+          <span class="presenter-banner-value" id="presenter-prize">🏆 $100 Amazon Gift Card</span>
+        </div>
+      </div>
+
+      <!-- Giant ball + win condition -->
       <div class="presenter-top">
         <div class="big-ball big-ball--presenter empty" id="presenter-big-ball">
           <div class="ball-letter" id="presenter-big-letter">?</div>
@@ -118,14 +162,15 @@
           <span class="presenter-win-label">Win Condition</span>
           <span class="presenter-win-name" id="presenter-win-name">Standard Line</span>
           <div class="pattern-preview" id="presenter-pattern-preview"></div>
+          <p class="presenter-win-desc" id="presenter-win-desc"></p>
         </div>
       </div>
 
-      <!-- Bottom bar: recent balls full width -->
+      <!-- Full-width recent balls (20) -->
       <div class="presenter-recent-bar">
         <span class="presenter-recent-label">Recent Calls</span>
         <div class="presenter-recent-balls" id="presenter-recent-balls">
-          <span style="color:var(--text-muted);font-size:1rem;">No numbers called yet</span>
+          <span class="no-calls-msg">No numbers called yet</span>
         </div>
       </div>
 
@@ -136,11 +181,9 @@
 
 <div id="toast"></div>
 
-<!-- Scripts at the bottom so the DOM is fully loaded before any JS runs -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-app-compat.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/firebase/9.23.0/firebase-database-compat.min.js"></script>
 <script src="config.js"></script>
 <script src="script.js"></script>
-
 </body>
 </html>
