@@ -29,7 +29,7 @@ const PATTERNS = {
 };
 
 // ─── STATE ───────────────────────────────────────────────────────────────────
-let mode = 'caller';
+let mode = 'presenter';
 let calledNumbers = [];
 let currentPattern = 'line';
 let currentRound = 1;
