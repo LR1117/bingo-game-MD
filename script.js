@@ -1,150 +1,35 @@
-
 // ─── STATE ───────────────────────────────────────────────────────────────────
 let mode = 'caller';
 let calledNumbers = [];
-let playerCard = [];
-let playerDaubed = new Set();
+let currentPattern = 'line';
 let db = null;
 let localMode = false;
 let gameRef = null;
 
-// ─── PATTERNS ────────────────────────────────────────────────────────────────
+// ─── PATTERN DEFINITIONS ─────────────────────────────────────────────────────
 const PATTERNS = {
-  'line': {
-    name: 'Standard Line',
-    desc: 'Get 5 in a row — horizontally, vertically, or diagonally. The FREE space counts!',
-    cells: null, // computed dynamically
-    check: checkLine
-  },
-  'corners': {
-    name: 'Four Corners',
-    desc: 'Mark the four corner squares: B1, B15, O1, and O75.',
-    cells: [[0,0],[0,4],[4,0],[4,4]],
-    check: checkCorners
-  },
-  't-shape': {
-    name: 'T-Shape',
-    desc: 'Fill the entire top row plus the middle column.',
-    cells: buildTShape(),
-    check: checkTShape
-  },
-  'x-shape': {
-    name: 'X-Shape',
-    desc: 'Mark both diagonals — they form an X across the card.',
-    cells: buildXShape(),
-    check: checkXShape
-  },
-  'frame': {
-    name: 'Frame',
-    desc: 'Fill all 16 squares around the outer edge of the card.',
-    cells: buildFrame(),
-    check: checkFrame
-  },
-  'coverall': {
-    name: 'Coverall (Blackout)',
-    desc: 'Mark every single square on your card. Very tough!',
-    cells: buildCoverall(),
-    check: checkCoverall
-  },
-  'postage': {
-    name: 'Postage Stamp',
-    desc: 'Fill the 2×2 square in the top-right corner.',
-    cells: [[0,3],[0,4],[1,3],[1,4]],
-    check: checkPostage
-  },
-  'l-shape': {
-    name: 'L-Shape',
-    desc: 'Fill the entire bottom row and entire left column.',
-    cells: buildLShape(),
-    check: checkLShape
-  }
+  'line':     { name: 'Standard Line',        desc: 'Get 5 in a row — horizontally, vertically, or diagonally. The FREE space counts!' },
+  'corners':  { name: 'Four Corners',         desc: 'Mark the four corner squares: B1, B15, O1, and O75.' },
+  't-shape':  { name: 'T-Shape',              desc: 'Fill the entire top row plus the middle column.' },
+  'x-shape':  { name: 'X-Shape',              desc: 'Mark both diagonals — they form an X across the card.' },
+  'frame':    { name: 'Frame',                desc: 'Fill all 16 squares around the outer edge of the card.' },
+  'coverall': { name: 'Coverall (Blackout)',  desc: 'Mark every single square on your card. Very tough!' },
+  'postage':  { name: 'Postage Stamp',        desc: 'Fill the 2×2 square in the top-right corner.' },
+  'l-shape':  { name: 'L-Shape',              desc: 'Fill the entire bottom row and entire left column.' }
 };
-
-function buildTShape() {
-  let cells = [];
-  for (let c = 0; c < 5; c++) cells.push([0, c]);
-  for (let r = 1; r < 5; r++) cells.push([r, 2]);
-  return cells;
-}
-function buildXShape() {
-  let cells = [];
-  for (let i = 0; i < 5; i++) { cells.push([i, i]); cells.push([i, 4-i]); }
-  return [...new Set(cells.map(c=>JSON.stringify(c)))].map(c=>JSON.parse(c));
-}
-function buildFrame() {
-  let cells = [];
-  for (let c = 0; c < 5; c++) { cells.push([0,c]); cells.push([4,c]); }
-  for (let r = 1; r < 4; r++) { cells.push([r,0]); cells.push([r,4]); }
-  return cells;
-}
-function buildCoverall() {
-  let cells = [];
-  for (let r = 0; r < 5; r++) for (let c = 0; c < 5; c++) cells.push([r,c]);
-  return cells;
-}
-function buildLShape() {
-  let cells = [];
-  for (let c = 0; c < 5; c++) cells.push([4,c]);
-  for (let r = 0; r < 4; r++) cells.push([r,0]);
-  return cells;
-}
-
-// ─── BINGO CARD GENERATION ────────────────────────────────────────────────────
-function generateCard() {
-  playerDaubed = new Set();
-  playerCard = [];
-  const cols = [[1,15],[16,30],[31,45],[46,60],[61,75]];
-  for (let c = 0; c < 5; c++) {
-    const [lo,hi] = cols[c];
-    const pool = [];
-    for (let n = lo; n <= hi; n++) pool.push(n);
-    shuffle(pool);
-    for (let r = 0; r < 5; r++) {
-      if (r === 2 && c === 2) { playerCard.push('FREE'); }
-      else { playerCard.push(pool[r]); }
-    }
-  }
-  // transpose: we stored col-major, need row-major for display
-  const grid = [];
-  for (let r = 0; r < 5; r++) {
-    for (let c = 0; c < 5; c++) {
-      grid.push(playerCard[c*5+r]);
-    }
-  }
-  playerCard = grid;
-  renderPlayerCard();
-  document.getElementById('bingo-alert').style.display = 'none';
-  saveCardToStorage();
-}
-
-function shuffle(arr) {
-  for (let i = arr.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i+1));
-    [arr[i],arr[j]] = [arr[j],arr[i]];
-  }
-}
-
-function saveCardToStorage() {
-  try { localStorage.setItem('bingo_card', JSON.stringify(playerCard)); } catch(e){}
-}
-
-function loadCardFromStorage() {
-  try {
-    const saved = localStorage.getItem('bingo_card');
-    if (saved) { playerCard = JSON.parse(saved); return true; }
-  } catch(e){}
-  return false;
-}
 
 // ─── FIREBASE ────────────────────────────────────────────────────────────────
 function connectFirebase() {
-  const url = 'https://bingogamemd-default-rtdb.firebaseio.com/' ;
+  const url = (typeof FIREBASE_DATABASE_URL !== 'undefined' && FIREBASE_DATABASE_URL !== 'YOUR_FIREBASE_DATABASE_URL_HERE')
+    ? FIREBASE_DATABASE_URL
+    : null;
+
   if (!url || !url.includes('firebaseio.com')) {
-    showToast('Please enter a valid Firebase Realtime Database URL.');
+    showToast('⚠️ No Firebase URL set — running in local mode. Edit config.js or your .env file.');
+    useLocalMode();
     return;
   }
-  localStorage.setItem('bingo_firebase_url', url);
-  initFirebase('https://bingogamemd-default-rtdb.firebaseio.com/');
+  initFirebase(url);
 }
 
 function initFirebase(url) {
@@ -165,29 +50,24 @@ function _initFB(url) {
     db = firebase.database(app);
     gameRef = db.ref('bingo_game');
     setupRealtimeListener();
-    document.getElementById('firebase-setup').style.display = 'none';
     showMainContent();
     setStatusOnline();
   } catch(e) {
     showToast('Firebase connection failed: ' + e.message);
+    useLocalMode();
   }
 }
 
 function useLocalMode() {
   localMode = true;
-  document.getElementById('firebase-setup').style.display = 'none';
   showMainContent();
   setStatusOffline();
 }
 
 function showMainContent() {
   document.getElementById('status-bar').style.display = 'flex';
-  document.getElementById('main-content').style.display = 'block';
   initBoard();
-  if (!loadCardFromStorage()) generateCard();
-  else renderPlayerCard();
-  renderBoard();
-  updatePattern();
+  renderAll();
   setMode(mode);
 }
 
@@ -203,21 +83,28 @@ function setStatusOffline() {
 
 function setupRealtimeListener() {
   gameRef.on('value', snapshot => {
-    const data = snapshot.val();
-    if (data && data.called) {
-      calledNumbers = data.called;
-    } else {
-      calledNumbers = [];
-    }
-    renderBoard();
-    renderPlayerCard();
-    updateBigBall();
-    updateRecentBalls();
-    updateBallCount();
+    const data = snapshot.val() || {};
+    calledNumbers  = data.called  || [];
+    currentPattern = data.pattern || 'line';
+
+    // Keep caller dropdown in sync (in case another caller tab changed it)
+    const sel = document.getElementById('pattern-select');
+    if (sel && sel.value !== currentPattern) sel.value = currentPattern;
+
+    renderAll();
   }, err => {
     showToast('Sync error: ' + err.message);
     setStatusOffline();
   });
+}
+
+// ─── PUSH TO FIREBASE ────────────────────────────────────────────────────────
+function pushState() {
+  if (localMode || !gameRef) {
+    renderAll();
+    return;
+  }
+  gameRef.set({ called: calledNumbers, pattern: currentPattern });
 }
 
 // ─── CALLING NUMBERS ─────────────────────────────────────────────────────────
@@ -232,68 +119,70 @@ function getLetter(n) {
 function callNumber() {
   const input = document.getElementById('call-input');
   const n = parseInt(input.value);
-  if (isNaN(n) || n < 1 || n > 75) {
-    showToast('Please enter a number between 1 and 75.');
-    return;
-  }
-  if (calledNumbers.includes(n)) {
-    showToast(`${getLetter(n)}-${n} was already called!`);
-    return;
-  }
+  if (isNaN(n) || n < 1 || n > 75) { showToast('Please enter a number between 1 and 75.'); return; }
+  if (calledNumbers.includes(n)) { showToast(`${getLetter(n)}-${n} was already called!`); return; }
   calledNumbers.push(n);
   input.value = '';
   input.focus();
-  pushCalledNumbers();
+  pushState();
   showToast(`${getLetter(n)}-${n} called!`);
 }
 
-function handleCallKey(e) {
-  if (e.key === 'Enter') callNumber();
-}
+function handleCallKey(e) { if (e.key === 'Enter') callNumber(); }
 
 function undoLast() {
   if (calledNumbers.length === 0) { showToast('Nothing to undo.'); return; }
   const removed = calledNumbers.pop();
-  pushCalledNumbers();
+  pushState();
   showToast(`Removed ${getLetter(removed)}-${removed}`);
 }
 
-function pushCalledNumbers() {
-  if (localMode || !gameRef) {
-    renderBoard();
-    renderPlayerCard();
-    updateBigBall();
-    updateRecentBalls();
-    updateBallCount();
-    return;
-  }
-  gameRef.set({ called: calledNumbers });
-}
-
 function confirmReset() {
-  if (!confirm('Reset the game? All called numbers will be cleared.')) return;
+  if (!confirm('Restart the game? All called numbers will be cleared.')) return;
   calledNumbers = [];
-  pushCalledNumbers();
-  showToast('Game reset!');
+  pushState();
+  showToast('Game restarted!');
 }
 
-// ─── BOARD RENDERING ─────────────────────────────────────────────────────────
+// ─── WIN CONDITION (caller changes, syncs to DB, presenter reads) ─────────────
+function callerUpdatePattern() {
+  currentPattern = document.getElementById('pattern-select').value;
+  pushState();   // saves pattern to Firebase so presenter picks it up
+}
+
+// ─── RENDER ALL ──────────────────────────────────────────────────────────────
+function renderAll() {
+  renderBoard();
+  updateCallerBall();
+  updatePresenterBall();
+  updateRecentBalls();
+  updateBallCount();
+  renderCallerPattern();
+  renderPresenterPattern();
+}
+
+// ─── BOARD (caller only) ──────────────────────────────────────────────────────
+// Layout: 5 columns (B I N G O), 15 rows per column.
+// B=1–15, I=16–30, N=31–45, G=46–60, O=61–75
+// Grid is row-major (left→right across columns, top→bottom across rows),
+// so row 0 = [1,16,31,46,61], row 1 = [2,17,32,47,62], etc.
 function initBoard() {
   const board = document.getElementById('bingo-board');
   const letters = ['B','I','N','G','O'];
   board.innerHTML = '';
+
+  // Column headers
   letters.forEach(l => {
     const h = document.createElement('div');
     h.className = `col-header ${l}`;
     h.textContent = l;
     board.appendChild(h);
   });
-  // Add row of 5 for each letter header... actually the grid just needs 75 cells
-  // We do 5 header + 75 number cells arranged properly
-  // Reset: 5 headers across, then 15 rows × 5 = 75 cells
-  for (let r = 0; r < 15; r++) {
-    for (let c = 0; c < 5; c++) {
-      const n = c * 15 + r + 1;
+
+  // 15 rows × 5 columns
+  for (let row = 0; row < 15; row++) {
+    for (let col = 0; col < 5; col++) {
+      const n = col * 15 + row + 1;   // B col: 1–15, I col: 16–30, etc.
       const cell = document.createElement('div');
       cell.className = 'board-cell';
       cell.id = `cell-${n}`;
@@ -308,180 +197,112 @@ function renderBoard() {
   for (let n = 1; n <= 75; n++) {
     const cell = document.getElementById(`cell-${n}`);
     if (!cell) continue;
-    if (n === latest) {
-      cell.className = 'board-cell latest';
-    } else if (calledNumbers.includes(n)) {
-      cell.className = 'board-cell called';
-    } else {
-      cell.className = 'board-cell';
-    }
+    if (n === latest)                   cell.className = 'board-cell latest';
+    else if (calledNumbers.includes(n)) cell.className = 'board-cell called';
+    else                                cell.className = 'board-cell';
   }
 }
 
-function updateBigBall() {
-  const ball = document.getElementById('big-ball');
-  const letter = document.getElementById('big-letter');
-  const number = document.getElementById('big-number');
+// ─── BALL DISPLAY ─────────────────────────────────────────────────────────────
+function setBallDisplay(ballEl, letterEl, numberEl) {
   if (calledNumbers.length === 0) {
-    ball.className = 'big-ball empty';
-    letter.textContent = '?';
-    number.textContent = '—';
+    ballEl.className = ballEl.className.replace(/\b(B|I|N|G|O|animate)\b/g, '').trim() + ' empty';
+    letterEl.textContent = '?';
+    numberEl.textContent = '—';
     return;
   }
   const latest = calledNumbers[calledNumbers.length - 1];
   const l = getLetter(latest);
-  ball.className = `big-ball ${l} animate`;
-  letter.textContent = l;
-  number.textContent = latest;
-  setTimeout(() => ball.classList.remove('animate'), 400);
+  ballEl.className = ballEl.className.replace(/\b(B|I|N|G|O|empty|animate)\b/g, '').trim() + ` ${l} animate`;
+  letterEl.textContent = l;
+  numberEl.textContent = latest;
+  setTimeout(() => { ballEl.className = ballEl.className.replace(' animate', ''); }, 400);
 }
 
-function updateRecentBalls() {
-  const container = document.getElementById('recent-balls');
-  const recent = calledNumbers.slice(-8).reverse();
-  if (recent.length === 0) {
-    container.innerHTML = '<span style="color:var(--text-muted);font-size:0.85rem;">No numbers called yet</span>';
-    return;
-  }
-  container.innerHTML = recent.map((n, i) => {
+function updateCallerBall() {
+  setBallDisplay(
+    document.getElementById('caller-big-ball'),
+    document.getElementById('caller-big-letter'),
+    document.getElementById('caller-big-number')
+  );
+}
+
+function updatePresenterBall() {
+  setBallDisplay(
+    document.getElementById('presenter-big-ball'),
+    document.getElementById('presenter-big-letter'),
+    document.getElementById('presenter-big-number')
+  );
+}
+
+// ─── RECENT BALLS ────────────────────────────────────────────────────────────
+function recentBallsHTML() {
+  const recent = calledNumbers.slice(-10).reverse();
+  if (recent.length === 0) return '<span style="color:var(--text-muted);font-size:0.85rem;">No numbers called yet</span>';
+  return recent.map((n, i) => {
     const l = getLetter(n);
-    const opacity = i === 0 ? '' : `opacity:${Math.max(0.3, 1 - i*0.1)};transform:scale(${Math.max(0.75, 1-i*0.04)})`;
-    return `<div class="mini-ball ${l}" style="${opacity}">${n}</div>`;
+    const style = i === 0 ? '' : `opacity:${Math.max(0.3, 1 - i * 0.09)};transform:scale(${Math.max(0.75, 1 - i * 0.035)})`;
+    return `<div class="mini-ball ${l}" style="${style}">${n}</div>`;
   }).join('');
 }
 
+function updateRecentBalls() {
+  const html = recentBallsHTML();
+  document.getElementById('recent-balls').innerHTML = html;
+  document.getElementById('presenter-recent-balls').innerHTML = html;
+}
+
 function updateBallCount() {
-  document.getElementById('balls-count').textContent = `${calledNumbers.length} ball${calledNumbers.length !== 1 ? 's' : ''} called`;
-}
-
-// ─── PLAYER CARD ──────────────────────────────────────────────────────────────
-function renderPlayerCard() {
-  const container = document.getElementById('player-card');
-  if (!playerCard || playerCard.length === 0) return;
-  const letters = ['B','I','N','G','O'];
-  container.innerHTML = '';
-
-  // Headers
-  letters.forEach(l => {
-    const h = document.createElement('div');
-    h.className = `col-header ${l}`;
-    h.textContent = l;
-    h.style.cssText = 'font-size:1rem;padding:0.3rem 0;';
-    container.appendChild(h);
-  });
-
-  playerCard.forEach((val, idx) => {
-    const cell = document.createElement('div');
-    if (val === 'FREE') {
-      cell.className = 'pc-cell free-space';
-      cell.textContent = 'FREE';
-      cell.title = 'Free space!';
-    } else {
-      const isCalled = calledNumbers.includes(val);
-      const isDaubed = playerDaubed.has(idx);
-      cell.className = `pc-cell${isDaubed ? ' daubed' : ''}${isCalled && !isDaubed ? ' called-match' : ''}`;
-      cell.textContent = val;
-      cell.onclick = () => toggleDaub(idx);
-    }
-    container.appendChild(cell);
-  });
-
-  checkBingo();
-}
-
-function toggleDaub(idx) {
-  if (playerCard[idx] === 'FREE') return;
-  if (playerDaubed.has(idx)) playerDaubed.delete(idx);
-  else playerDaubed.add(idx);
-  renderPlayerCard();
-}
-
-// ─── BINGO CHECK ─────────────────────────────────────────────────────────────
-function isMarked(r, c) {
-  const idx = r * 5 + c;
-  if (playerCard[idx] === 'FREE') return true;
-  return playerDaubed.has(idx);
-}
-
-function checkLine() {
-  // Rows
-  for (let r = 0; r < 5; r++) {
-    if ([0,1,2,3,4].every(c => isMarked(r,c))) return true;
-  }
-  // Cols
-  for (let c = 0; c < 5; c++) {
-    if ([0,1,2,3,4].every(r => isMarked(r,c))) return true;
-  }
-  // Diagonals
-  if ([0,1,2,3,4].every(i => isMarked(i,i))) return true;
-  if ([0,1,2,3,4].every(i => isMarked(i,4-i))) return true;
-  return false;
-}
-
-function checkCorners() { return isMarked(0,0) && isMarked(0,4) && isMarked(4,0) && isMarked(4,4); }
-function checkTShape() { return buildTShape().every(([r,c]) => isMarked(r,c)); }
-function checkXShape() { return buildXShape().every(([r,c]) => isMarked(r,c)); }
-function checkFrame() { return buildFrame().every(([r,c]) => isMarked(r,c)); }
-function checkCoverall() { return buildCoverall().every(([r,c]) => isMarked(r,c)); }
-function checkPostage() { return [[0,3],[0,4],[1,3],[1,4]].every(([r,c]) => isMarked(r,c)); }
-function checkLShape() { return buildLShape().every(([r,c]) => isMarked(r,c)); }
-
-function checkBingo() {
-  const pattern = document.getElementById('pattern-select').value;
-  const info = PATTERNS[pattern];
-  const won = info.check();
-  const alert = document.getElementById('bingo-alert');
-  alert.style.display = won ? 'block' : 'none';
+  document.getElementById('balls-count').textContent =
+    `${calledNumbers.length} ball${calledNumbers.length !== 1 ? 's' : ''} called`;
 }
 
 // ─── PATTERN PREVIEW ─────────────────────────────────────────────────────────
-function updatePattern() {
-  const pattern = document.getElementById('pattern-select').value;
-  const info = PATTERNS[pattern];
-  document.getElementById('pattern-name').textContent = info.name;
-  document.getElementById('pattern-desc-text').textContent = info.desc;
-  renderPatternPreview(pattern);
-  checkBingo();
-}
-
-function renderPatternPreview(pattern) {
-  const container = document.getElementById('pattern-preview');
+function renderPatternPreview(containerId, pattern) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
   container.innerHTML = '';
   for (let r = 0; r < 5; r++) {
     for (let c = 0; c < 5; c++) {
       const cell = document.createElement('div');
       const isCenter = r === 2 && c === 2;
       let on = false;
-      if (pattern === 'line') {
-        on = r === 2 || c === 2 || r === c || r === 4-c;
-      } else if (pattern === 'corners') {
-        on = (r === 0 || r === 4) && (c === 0 || c === 4);
-      } else if (pattern === 't-shape') {
-        on = r === 0 || c === 2;
-      } else if (pattern === 'x-shape') {
-        on = r === c || r === 4-c;
-      } else if (pattern === 'frame') {
-        on = r === 0 || r === 4 || c === 0 || c === 4;
-      } else if (pattern === 'coverall') {
-        on = true;
-      } else if (pattern === 'postage') {
-        on = (r <= 1 && c >= 3);
-      } else if (pattern === 'l-shape') {
-        on = r === 4 || c === 0;
-      }
+      if      (pattern === 'line')    on = r === 2 || c === 2 || r === c || r === 4-c;
+      else if (pattern === 'corners') on = (r === 0 || r === 4) && (c === 0 || c === 4);
+      else if (pattern === 't-shape') on = r === 0 || c === 2;
+      else if (pattern === 'x-shape') on = r === c || r === 4-c;
+      else if (pattern === 'frame')   on = r === 0 || r === 4 || c === 0 || c === 4;
+      else if (pattern === 'coverall') on = true;
+      else if (pattern === 'postage') on = r <= 1 && c >= 3;
+      else if (pattern === 'l-shape') on = r === 4 || c === 0;
       cell.className = `pp-cell${isCenter ? ' free' : (on ? ' on' : '')}`;
       container.appendChild(cell);
     }
   }
 }
 
+function renderCallerPattern() {
+  const info = PATTERNS[currentPattern] || PATTERNS['line'];
+  document.getElementById('caller-pattern-name').textContent = info.name;
+  document.getElementById('caller-pattern-desc').textContent = info.desc;
+  renderPatternPreview('caller-pattern-preview', currentPattern);
+}
+
+function renderPresenterPattern() {
+  const info = PATTERNS[currentPattern] || PATTERNS['line'];
+  document.getElementById('presenter-win-name').textContent = info.name;
+  renderPatternPreview('presenter-pattern-preview', currentPattern);
+}
+
 // ─── MODE SWITCHING ───────────────────────────────────────────────────────────
 function setMode(m) {
   mode = m;
-  document.getElementById('btn-caller').className = 'btn-mode' + (m === 'caller' ? ' active' : '');
-  document.getElementById('btn-player').className = 'btn-mode' + (m === 'player' ? ' active' : '');
-  document.getElementById('mode-label').textContent = m === 'caller' ? 'Caller Mode' : 'Player Mode';
-  document.getElementById('caller-panel').style.display = m === 'caller' ? 'block' : 'none';
+  document.getElementById('btn-caller').className   = 'btn-mode' + (m === 'caller'    ? ' active' : '');
+  document.getElementById('btn-player').className   = 'btn-mode' + (m === 'presenter' ? ' active' : '');
+  document.getElementById('mode-label').textContent = m === 'caller' ? 'Caller Mode' : 'Presenter View';
+
+  document.getElementById('caller-view').style.display    = m === 'caller'    ? 'block' : 'none';
+  document.getElementById('presenter-view').style.display = m === 'presenter' ? 'block' : 'none';
 }
 
 // ─── TOAST ────────────────────────────────────────────────────────────────────
@@ -494,12 +315,7 @@ function showToast(msg) {
   toastTimer = setTimeout(() => toast.classList.remove('show'), 2800);
 }
 
-// ─── INIT ─────────────────────────────────────────────────────────────────────
-window.addEventListener('DOMContentLoaded', () => {
-  // Try to restore Firebase URL
-  const savedUrl = localStorage.getItem('bingo_firebase_url');
-  if (savedUrl) {
-    document.getElementById('firebase-url-input').value = savedUrl;
-    initFirebase(savedUrl);
-  }
+// ─── BOOT — wait for DOM then connect ────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  connectFirebase();
 });
