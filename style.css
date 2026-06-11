@@ -748,14 +748,11 @@ input[type="number"]::-webkit-inner-spin-button { opacity: 0.5; }
   mix-blend-mode: multiply;  
 }
 
-
-
-
 .my-tag {
   position: fixed;
   bottom: 0.75rem;
   right: 0.75rem;
   color:var(--secondary-lt);  
-  font-size: .78rem;
+  font-size: 0.75rem;
   white-space:nowrap;
 }
