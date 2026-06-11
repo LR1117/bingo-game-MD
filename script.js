@@ -394,7 +394,7 @@ function renderPatternPreview(containerId, pattern) {
         else if (pattern === 'coverall')  on = true;
         else if (pattern === 'postage')   on = r <= 1 && c >= 3;
         else if (pattern === 'l-shape')   on = r === 4 || c === 0;
-        else if (pattern === 'block6')    on = r >= 1 && r <= 2 && c >= 1 && c <= 3;
+        else if (pattern === 'block6')    on = r >= 1 && r <= 3 && c >= 0 && c < 2;
         else if (pattern === 'standing')  ;  // checkerboard hint
         else if (pattern === 'standing2') ;
         cell.className = `pp-cell${isCenter ? ' free' : (on ? ' on' : '')}`;
