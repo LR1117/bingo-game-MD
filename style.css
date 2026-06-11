@@ -747,3 +747,13 @@ input[type="number"]::-webkit-inner-spin-button { opacity: 0.5; }
   margin: 0 auto;
   mix-blend-mode: multiply;  
 }
+
+
+
+
+.my-tag {
+  max-width: 100vw;
+  margin-left: 72vw;
+  color:var(--secondary-lt);  
+  font-size: .78rem;
+}
