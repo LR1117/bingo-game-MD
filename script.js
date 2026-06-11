@@ -8,7 +8,7 @@ const ROUND_DATA = [
   { round: 6,  prize: 'Mystery Prize',          pattern: 'standing2',title: 'Round 6' },
   { round: 7,  prize: '$500 Visa Gift Card',    pattern: 'corners',  title: 'Round 7' },
   { round: 8,  prize: 'Mystery Round',          pattern: 'block6',   title: 'Round 8' },
-  { round: 9,  prize: '$1000 Visa Gift Card',   pattern: 'standing', title: 'Round 9' },
+  { round: 9,  prize: '$1000 Visa Gift Card',   pattern: 'standing2', title: 'Round 9' },
   { round: 10, prize: '$1500 Visa Gift Card',   pattern: 'corners',  title: 'Round 10' },
 ];
 
@@ -269,12 +269,12 @@ function updateRoundPrizeDisplay() {
   if (roundEl) roundEl.textContent = currentRoundTitle || `Round ${currentRound}`;
   if (prizeEl) {
     if (isBonusRound) {
-      prizeEl.textContent = 'Bonus Round - Prize TBD';
+      prizeEl.textContent = 'Bonus Round';
     } else {
       if (currentRound<=10){
-        prizeEl.textContent = currentPrize ? ` ${currentPrize}` : 'Prize TBD';
+        prizeEl.textContent = currentPrize ? ` ${currentPrize}` : '';
       }else{
-        prizeEl.textContent = 'Prize TBD'
+        prizeEl.textContent = 'Bouns Round'
       }
     }
   }
